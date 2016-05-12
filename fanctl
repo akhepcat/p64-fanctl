@@ -1,0 +1,89 @@
+#!/bin/bash
+#  use an interface like: http://elinux.org/RPi_GPIO_Interface_Circuits#Output_circuits
+# for your fan.  I use an 80ma 5v micro fan, which is compatible with the basic NPN circuit.
+
+GPIO=75
+
+# In auto mode, how often (in seconds) do we check for temperature changes?
+UPDATE=5
+
+################################
+PROG="${0##*/}"
+PID="$$"
+
+function do_exit()
+{
+	disable
+	cleanup
+        exit
+}
+
+function setup() {
+    [[ -e /sys/class/gpio/gpio${GPIO}/value ]] || echo ${GPIO} > /sys/class/gpio/export
+    echo "out" > /sys/class/gpio/gpio${GPIO}/direction
+    echo "0" > /sys/class/gpio/gpio${GPIO}/value
+}
+
+function cleanup() {
+    [[ -e /sys/class/gpio/gpio${GPIO}/value ]] && echo "${GPIO}" > /sys/class/gpio/unexport
+}
+
+function enable() {
+    [[ -e /sys/class/gpio/gpio${GPIO}/value ]] && echo "1" > /sys/class/gpio/gpio${GPIO}/value || echo "${PROG} setup must be run first"
+}
+
+function disable() {
+    [[ -e /sys/class/gpio/gpio${GPIO}/value ]] && echo "0" > /sys/class/gpio/gpio${GPIO}/value || echo "${PROG} setup must be run first"
+}
+
+
+function do_auto() {
+    if [ -r /sys/devices/virtual/thermal/thermal_zone0/temp ]
+    then
+    	renice -n 15 -p ${PID}
+    	FANON=0
+    	while true
+    	do
+    		TEMP=$(cat /sys/devices/virtual/thermal/thermal_zone0/temp)
+    		if [ ${TEMP:-40} -gt 50 -a ${FANON} -eq 0 ]
+    		then
+    			FANON=5
+    			enable
+    		elif [ ${TEMP:-40} -gt 50 -a ${FANON} -gt 0 ]
+    		then
+			# reset the countdown timer
+    			FANON=5
+    		elif [ ${TEMP:-40} -le 50 -a ${FANON} -gt 0 ]
+    		then
+    			FANON=$((FANON - 1))
+    		else
+    			disable
+    		fi
+    		sleep ${UPDATE}
+    	done
+    fi
+
+}
+
+##############################
+
+trap do_exit SIGINT SIGTERM SIGKILL SIGQUIT SIGABRT SIGSTOP SIGSEGV
+
+case "$1" in
+	start) setup; enable;
+	;;
+	stop) disable; cleanup;
+	;;
+	setup|init) setup;
+	;;
+	on|enable|1) enable;
+	;;
+	off|disable|0) disable;
+	;;
+	auto) echo "backgrounding to screen \"fanctl-${PID}\""; screen -dmS fanctl-${PID} ${0} do_auto
+	;;
+	do_auto) setup; do_auto;
+	;;
+	*) echo "usage: ${PROG} [start|stop|setup|on|off|auto]"
+	;;
+esac
