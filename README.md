@@ -19,9 +19,9 @@ your heatsink some extra cooling love.
 
 In the script, there are two variables that are useful to you:
 
-# which GPIO pin are you using
+\# which GPIO pin are you using
 GPIO=75
 
 
-# In auto mode, how often (in seconds) do we check for temperature changes?
+\# In auto mode, how often (in seconds) do we check for temperature changes?
 UPDATE=5
