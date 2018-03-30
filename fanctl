@@ -93,9 +93,9 @@ case "$1" in
 	;;
 	off|disable|0) disable;
 	;;
-	auto) echo "backgrounding to screen \"fanctl-${PID}\""; screen -dmS fanctl-${PID} ${0} do_auto
+	auto) setup && echo "backgrounding to screen \"fanctl-${PID}\""; screen -dmS fanctl-${PID} ${0} do_auto
 	;;
-	do_auto) setup; do_auto;
+	do_auto) do_auto;
 	;;
 	*) echo "usage: ${PROG} [start|stop|setup|on|off|auto]"
 	;;
