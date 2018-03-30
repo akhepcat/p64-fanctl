@@ -19,9 +19,19 @@ function do_exit()
 }
 
 function setup() {
-    [[ -e /sys/class/gpio/gpio${GPIO}/value ]] || echo ${GPIO} > /sys/class/gpio/export
-    echo "out" > /sys/class/gpio/gpio${GPIO}/direction
-    echo "0" > /sys/class/gpio/gpio${GPIO}/value
+    if [ ! -e /sys/class/gpio ]
+    then
+    	echo "No GPIO support"
+    	exit 1
+    elif [ ! -e /sys/devices/virtual/thermal/thermal_zone0/temp ]
+    then
+    	echo "No thermal zone support"
+    	exit 1
+    else
+	    [[ -e /sys/class/gpio/gpio${GPIO}/value ]] || echo ${GPIO} > /sys/class/gpio/export
+	    echo "out" > /sys/class/gpio/gpio${GPIO}/direction
+	    echo "0" > /sys/class/gpio/gpio${GPIO}/value
+    fi
 }
 
 function cleanup() {
@@ -61,6 +71,9 @@ function do_auto() {
     		fi
     		sleep ${UPDATE}
     	done
+    else
+    	echo "No thermal zone support found: did you run setup?"
+    	exit 1
     fi
 
 }
