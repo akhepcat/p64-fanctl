@@ -2,7 +2,8 @@
 #  use an interface like: http://elinux.org/RPi_GPIO_Interface_Circuits#Output_circuits
 # for your fan.  I use an 80ma 5v micro fan, which is compatible with the basic NPN circuit.
 
-GPIO=75
+#rockpro64 pin 40 is 127,  pine64 pin 40 is 75
+GPIO=127
 
 # In auto mode, how often (in seconds) do we check for temperature changes?
 UPDATE=5
@@ -47,6 +48,19 @@ function disable() {
 }
 
 
+function unscreen() {
+	# the procname is based on fanctl-${PID}  but there shouldn't be more than one running, so hope for the best
+	S=fanctl
+	screen -q -ls ${S}
+	if [ $? -ne 11 ]
+	then
+		echo "${S} is not running"
+	else
+		screen -S ${S} -p 0 -X stuff "^C"
+	fi
+	screen -wipe ${S} 2>&1 | grep -v 'No Sockets'
+}
+
 function do_auto() {
     if [ -r /sys/devices/virtual/thermal/thermal_zone0/temp ]
     then
@@ -55,6 +69,11 @@ function do_auto() {
     	while true
     	do
     		TEMP=$(cat /sys/devices/virtual/thermal/thermal_zone0/temp)
+    		# rockpro64 gives temp to the thousandth  by multiplying * 1000
+    		if [ ${TEMP:-40} -gt 10000 ]
+    		then
+    			TEMP=$((TEMP / 1000))
+    		fi
     		if [ ${TEMP:-40} -gt 50 -a ${FANON} -eq 0 ]
     		then
     			FANON=5
@@ -95,8 +114,10 @@ case "$1" in
 	;;
 	auto) setup && echo "backgrounding to screen \"fanctl-${PID}\""; screen -dmS fanctl-${PID} ${0} do_auto
 	;;
+	unauto) unscreen
+	;;
 	do_auto) do_auto;
 	;;
-	*) echo "usage: ${PROG} [start|stop|setup|on|off|auto]"
+	*) echo "usage: ${PROG} [start|stop|setup|on|off|auto|unauto]"
 	;;
 esac
