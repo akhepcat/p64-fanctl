@@ -1,5 +1,5 @@
 # p64-fanctl
-bash script to control a small fan from a pine64 GPIO
+bash script to control a small fan from a Pine64 or RockPro64 5v GPIO
 
 usage: fanctl [start|stop|setup|on|off|auto|unauto]
 
