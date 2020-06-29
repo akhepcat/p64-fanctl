@@ -7,6 +7,7 @@ For a 5v fan, you can use a simple [1-transistor interface](http://elinux.org/RP
 
 For a 12v fan, you'll need a 2-transistor design as alluded to by [Bald Engineer](https://www.baldengineer.com/pwm-3-pin-pc-fan-arduino.html/npn-pnp-driver-low-1520px) however his pins may not be the same as your pins, so I've posted a cleaned-up schematic with a corrected, [generic pin-out](12V-Fan-ctrl.png)  - you'll need to validate your transistor pins before wiring.
 
+If you use the GPIO on pin 40 like I do, then the script has the values for you at the top.  Pine64  and RockPro64  use different numbers, so you'll need to change them according to your platform.   Any other GPIO will require you to look up the values somewhere else.
 
 Auto mode will start the script up backgrounded in a screen session and
 watch the system temperature until it exceeds the preset limit of 50c, at
